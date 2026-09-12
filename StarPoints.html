@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⭐ StarPoints – Kids Reward Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Firebase compat SDK (same pattern as your other apps) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root {
+    --sun: #FFD600;
+    --sky: #4FC3F7;
+    --mint: #69F0AE;
+    --coral: #FF7043;
+    --lavender: #CE93D8;
+    --ink: #1A1A2E;
+    --soft: #F0F4FF;
+    --white: #FFFFFF;
+    --card-shadow: 0 4px 20px rgba(26,26,46,0.10);
+    --radius: 20px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #e0f7fa 0%, #f3e5f5 50%, #fff9c4 100%);
+    min-height: 100vh;
+    color: var(--ink);
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.4rem; font-weight: 900; color: var(--sun); }
+  header h1 span { color: #fff; }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  #sync-indicator { font-size: 0.75rem; color: #888; font-weight: 600; }
+  #add-kid-btn {
+    background: var(--sun); color: var(--ink);
+    border: none; border-radius: 50px;
+    padding: 8px 16px; font: 700 0.88rem 'Nunito', sans-serif;
+    cursor: pointer; transition: transform .15s;
+  }
+  #add-kid-btn:hover { transform: scale(1.06); }
+
+  /* TABS */
+  #tabs {
+    display: flex; gap: 8px; padding: 14px 16px 0;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  #tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 8px 18px; border-radius: 50px;
+    background: #fff; border: 2.5px solid transparent;
+    font: 700 0.88rem 'Nunito', sans-serif; color: var(--ink);
+    cursor: pointer; transition: all .15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab.active { background: var(--ink); color: #fff; border-color: var(--sun); }
+  .tab .pts-badge {
+    background: var(--sun); color: var(--ink);
+    border-radius: 50px; padding: 2px 8px;
+    font-size: 0.75rem; font-weight: 800;
+  }
+  .tab.active .pts-badge { background: var(--sun); }
+
+  /* MAIN */
+  main { padding: 18px 16px; max-width: 640px; margin: 0 auto; }
+
+  /* KID CARD */
+  .kid-card {
+    background: #fff; border-radius: var(--radius);
+    box-shadow: var(--card-shadow); overflow: hidden;
+  }
+  .kid-header {
+    padding: 20px 22px 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    font-size: 1.8rem; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .kid-info h2 { font-size: 1.2rem; font-weight: 800; }
+  .kid-info .score { font-size: 0.85rem; color: #666; font-weight: 600; margin-top: 2px; }
+  .kid-info .score strong { color: var(--coral); font-size: 1rem; }
+  .star-row { display: flex; gap: 2px; margin-top: 6px; flex-wrap: wrap; }
+
+  /* PROGRESS */
+  .progress-wrap { padding: 0 22px 12px; }
+  .progress-label {
+    font-size: 0.72rem; color: #999; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 5px; display: flex; justify-content: space-between;
+  }
+  .progress-bg { height: 10px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mint), var(--sky));
+    border-radius: 10px; transition: width .5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* SECTION */
+  .section { padding: 0 22px 20px; }
+  .section-title {
+    font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; color: #bbb; margin-bottom: 10px;
+  }
+
+  /* TASKS */
+  .task-grid { display: flex; flex-direction: column; gap: 8px; }
+  .task-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--soft); border-radius: 12px; padding: 10px 12px; gap: 8px;
+  }
+  .task-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92rem; }
+  .task-right { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+  .pts-tag {
+    background: var(--mint); color: var(--ink);
+    border-radius: 20px; padding: 3px 9px; font-size: 0.75rem; font-weight: 800;
+  }
+  .earn-btn {
+    background: var(--ink); color: #fff;
+    border: none; border-radius: 8px;
+    padding: 5px 11px; font: 700 0.78rem 'Nunito', sans-serif;
+    cursor: pointer; transition: transform .12s, background .12s;
+  }
+  .earn-btn:hover { background: var(--coral); transform: scale(1.05); }
+  .earned-tag {
+    background: #e8f5e9; color: #388e3c;
+    border-radius: 8px; padding: 5px 9px; font-size: 0.78rem; font-weight: 700;
+  }
+
+  /* REWARDS */
+  .reward-grid { display: flex; flex-direction: column; gap: 8px; }
+  .reward-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--soft); border-radius: 12px; padding: 10px 12px; gap: 8px;
+  }
+  .reward-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.9rem; flex: 1; }
+  .reward-cost {
+    background: var(--lavender); color: var(--ink);
+    border-radius: 20px; padding: 3px 9px; font-size: 0.75rem; font-weight: 800; flex-shrink: 0;
+  }
+  .redeem-btn {
+    background: var(--coral); color: #fff;
+    border: none; border-radius: 8px;
+    padding: 5px 11px; font: 700 0.78rem 'Nunito', sans-serif;
+    cursor: pointer; transition: transform .12s; flex-shrink: 0;
+  }
+  .redeem-btn:disabled { background: #ddd; color: #aaa; cursor: not-allowed; }
+  .redeem-btn:not(:disabled):hover { transform: scale(1.05); }
+
+  /* HISTORY */
+  .history-list { display: flex; flex-direction: column; gap: 4px; }
+  .history-item {
+    font-size: 0.83rem; display: flex; justify-content: space-between;
+    padding: 6px 0; border-bottom: 1px solid #f0f0f0; color: #555; gap: 8px;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-meta { display: flex; flex-direction: column; gap: 1px; }
+  .history-time { font-size: 0.7rem; color: #bbb; }
+  .history-pts { font-weight: 800; flex-shrink: 0; }
+  .history-pts.earn { color: #43a047; }
+  .history-pts.spend { color: var(--coral); }
+
+  /* KID ACTIONS */
+  .kid-actions { padding: 0 22px 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .reset-day-btn, .remove-kid-btn {
+    border: none; border-radius: 10px;
+    padding: 8px 16px; font: 700 0.82rem 'Nunito', sans-serif;
+    cursor: pointer; transition: transform .12s;
+  }
+  .reset-day-btn { background: #fff3e0; color: #e65100; }
+  .remove-kid-btn { background: #fce4ec; color: #c62828; }
+  .reset-day-btn:hover, .remove-kid-btn:hover { transform: scale(1.04); }
+
+  /* MODAL */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; padding: 20px;
+  }
+  .overlay.hidden { display: none; }
+  .modal {
+    background: #fff; border-radius: var(--radius);
+    padding: 26px 26px 22px; width: 100%; max-width: 380px;
+    box-shadow: 0 16px 60px rgba(0,0,0,0.25);
+  }
+  .modal h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 16px; }
+  .modal label { font-size: 0.83rem; font-weight: 700; display: block; margin-bottom: 5px; color: #555; }
+  .modal input, .modal select {
+    width: 100%; border: 2px solid #e0e0e0; border-radius: 10px;
+    padding: 10px 13px; font: 600 0.92rem 'Nunito', sans-serif;
+    margin-bottom: 13px; outline: none; transition: border-color .15s;
+  }
+  .modal input:focus, .modal select:focus { border-color: var(--sky); }
+  .emoji-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 13px; }
+  .emoji-opt {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--soft); border: 2.5px solid transparent;
+    font-size: 1.2rem; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: all .12s;
+  }
+  .emoji-opt.selected { border-color: var(--sky); background: #e3f2fd; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+  .modal-btns button {
+    flex: 1; border: none; border-radius: 10px;
+    padding: 11px; font: 700 0.9rem 'Nunito', sans-serif;
+    cursor: pointer; transition: transform .12s;
+  }
+  .btn-confirm { background: var(--ink); color: #fff; }
+  .btn-cancel { background: var(--soft); color: var(--ink); }
+  .modal-btns button:hover { transform: scale(1.03); }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink); color: #fff;
+    padding: 12px 22px; border-radius: 50px;
+    font-weight: 700; font-size: 0.88rem;
+    z-index: 300; transition: transform .3s cubic-bezier(.4,0,.2,1);
+    white-space: nowrap; pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* EMPTY / LOADING */
+  .empty-state, #loading {
+    text-align: center; padding: 60px 20px; color: #aaa;
+  }
+  .empty-state .big { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.98rem; font-weight: 600; line-height: 1.6; }
+  .spinner {
+    width: 36px; height: 36px; border: 4px solid #e0e0e0;
+    border-top-color: var(--sky); border-radius: 50%;
+    animation: spin .8s linear infinite; margin: 0 auto 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 420px) {
+    header h1 { font-size: 1.2rem; }
+    main { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⭐ <span>Star</span>Points</h1>
+  <div class="header-right">
+    <span id="sync-indicator">⏳ connecting…</span>
+    <button id="add-kid-btn">+ Add Kid</button>
+  </div>
+</header>
+
+<div id="tabs"></div>
+<main id="main">
+  <div id="loading"><div class="spinner"></div>Loading…</div>
+</main>
+
+<!-- Add Kid Modal -->
+<div class="overlay hidden" id="add-modal">
+  <div class="modal">
+    <h3>Add a Kid 🌟</h3>
+    <label>Name</label>
+    <input id="kid-name" type="text" placeholder="e.g. Sofia" maxlength="20" />
+    <label>Pick an avatar</label>
+    <div class="emoji-picker" id="emoji-picker"></div>
+    <label>Favourite colour</label>
+    <select id="kid-color">
+      <option value="#FFD600">☀️ Sunny Yellow</option>
+      <option value="#4FC3F7">🩵 Sky Blue</option>
+      <option value="#69F0AE">🌿 Mint Green</option>
+      <option value="#FF7043">🔥 Coral</option>
+      <option value="#CE93D8">💜 Lavender</option>
+      <option value="#F48FB1">🩷 Pink</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="cancel-add">Cancel</button>
+      <button class="btn-confirm" id="confirm-add">Add Kid ✨</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  FIREBASE CONFIG — replace with your project's config
+// ═══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "REPLACE_API_KEY",
+  authDomain:        "REPLACE_PROJECT_ID.firebaseapp.com",
+  projectId:         "REPLACE_PROJECT_ID",
+  storageBucket:     "REPLACE_PROJECT_ID.appspot.com",
+  messagingSenderId: "REPLACE_SENDER_ID",
+  appId:             "REPLACE_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ═══════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════
+const TASKS = [
+  { id: 'bed',   emoji: '🛏️', label: 'Make your bed',            pts: 5  },
+  { id: 'hw',    emoji: '📚', label: 'Do your homework',          pts: 10 },
+  { id: 'chore', emoji: '🧹', label: 'Help with chores',          pts: 10 },
+  { id: 'kind',  emoji: '😊', label: 'Be kind / No complaining',  pts: 5  },
+  { id: 'read',  emoji: '📖', label: 'Read for 20 minutes',       pts: 5  },
+];
+
+const REWARDS = [
+  { id: 'icecream', emoji: '🍦', label: 'Ice cream date',             cost: 50  },
+  { id: 'movie',    emoji: '🎬', label: 'Family movie night pick',    cost: 75  },
+  { id: 'activity', emoji: '🎒', label: 'Choose a fun activity',      cost: 100 },
+  { id: 'cash',     emoji: '💵', label: '$10 cash',                   cost: 150 },
+  { id: 'trip',     emoji: '🌴', label: 'Day trip or special outing', cost: 200 },
+];
+
+const AVATARS = ['🦁','🐻','🐼','🦊','🐸','🐯','🐨','🐙','🦋','🌸','🦄','🚀'];
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let kids = [];         // live array from Firestore
+let activeKid = null;
+let selectedEmoji = AVATARS[0];
+let unsubscribe = null;
+
+// ═══════════════════════════════════════════════════════
+//  FIRESTORE — real-time listener
+// ═══════════════════════════════════════════════════════
+function startListener() {
+  unsubscribe = db.collection('starpoints_kids')
+    .orderBy('createdAt')
+    .onSnapshot(snap => {
+      kids = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (!activeKid && kids.length) activeKid = kids[0].id;
+      if (activeKid && !kids.find(k => k.id === activeKid)) {
+        activeKid = kids.length ? kids[0].id : null;
+      }
+      document.getElementById('sync-indicator').textContent = '🟢 live';
+      render();
+    }, err => {
+      console.error(err);
+      document.getElementById('sync-indicator').textContent = '🔴 offline';
+    });
+}
+
+async function saveKid(kid) {
+  const { id, ...data } = kid;
+  await db.collection('starpoints_kids').doc(id).set(data);
+}
+
+async function deleteKid(id) {
+  await db.collection('starpoints_kids').doc(id).delete();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════
+function render() {
+  renderTabs();
+  renderMain();
+}
+
+function renderTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = kids.map(k => `
+    <button class="tab ${k.id === activeKid ? 'active' : ''}" onclick="switchKid('${k.id}')">
+      ${k.emoji} ${k.name}
+      <span class="pts-badge">${k.totalPts || 0}⭐</span>
+    </button>`).join('');
+}
+
+function renderMain() {
+  const el = document.getElementById('main');
+
+  if (kids.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="big">⭐</div>
+        <p>No kids added yet.<br>Tap <strong>+ Add Kid</strong> to get started!</p>
+      </div>`;
+    return;
+  }
+
+  const kid = kids.find(k => k.id === activeKid) || kids[0];
+  activeKid = kid.id;
+
+  const todayEarned = kid.todayEarned || [];
+  const totalPts    = kid.totalPts || 0;
+  const nextReward  = REWARDS.find(r => r.cost > totalPts);
+  const progressPct = nextReward ? Math.min(100, Math.round(totalPts / nextReward.cost * 100)) : 100;
+  const starCount   = Math.min(10, Math.floor(totalPts / 10));
+  const stars       = '⭐'.repeat(starCount) + '☆'.repeat(10 - starCount);
+  const history     = (kid.history || []).slice(-15).reverse();
+
+  el.innerHTML = `
+  <div class="kid-card">
+    <div class="kid-header">
+      <div class="avatar" style="background:${kid.color}22">${kid.emoji}</div>
+      <div class="kid-info">
+        <h2>${kid.name}</h2>
+        <div class="score">Total points: <strong>${totalPts} ⭐</strong></div>
+        <div class="star-row">${stars}</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      ${nextReward
+        ? `<div class="progress-label">
+             <span>Next: ${nextReward.emoji} ${nextReward.label}</span>
+             <span>${totalPts}/${nextReward.cost}</span>
+           </div>
+           <div class="progress-bg"><div class="progress-fill" style="width:${progressPct}%"></div></div>`
+        : `<div class="progress-label"><span>🎉 All rewards unlocked!</span></div>`
+      }
+    </div>
+
+    <div class="section">
+      <div class="section-title">Today's Tasks</div>
+      <div class="task-grid">
+        ${TASKS.map(t => {
+          const done = todayEarned.includes(t.id);
+          return `<div class="task-row">
+            <div class="task-left">${t.emoji} ${t.label}</div>
+            <div class="task-right">
+              <span class="pts-tag">+${t.pts}</span>
+              ${done
+                ? `<span class="earned-tag">✓ Done</span>`
+                : `<button class="earn-btn" onclick="earnTask('${kid.id}','${t.id}',${t.pts},'${t.label}')">+Points</button>`}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Rewards</div>
+      <div class="reward-grid">
+        ${REWARDS.map(r => {
+          const can = totalPts >= r.cost;
+          return `<div class="reward-row">
+            <div class="reward-left">${r.emoji} ${r.label}</div>
+            <span class="reward-cost">${r.cost}⭐</span>
+            <button class="redeem-btn" ${can ? '' : 'disabled'}
+              onclick="redeem('${kid.id}',${r.cost},'${r.label}')">
+              ${can ? 'Redeem 🎉' : 'Locked'}
+            </button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    ${history.length ? `
+    <div class="section">
+      <div class="section-title">Recent Activity</div>
+      <div class="history-list">
+        ${history.map(h => `
+          <div class="history-item">
+            <div class="history-meta">
+              <span>${h.label}</span>
+              <span class="history-time">${formatTime(h.ts)}</span>
+            </div>
+            <span class="history-pts ${h.pts > 0 ? 'earn' : 'spend'}">${h.pts > 0 ? '+' : ''}${h.pts}⭐</span>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div class="kid-actions">
+      <button class="reset-day-btn" onclick="resetDay('${kid.id}')">🔄 New Day</button>
+      <button class="remove-kid-btn" onclick="removeKid('${kid.id}','${kid.name}')">🗑️ Remove</button>
+    </div>
+  </div>`;
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-CA') + ' ' + d.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ═══════════════════════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════════════════════
+function switchKid(id) { activeKid = id; render(); }
+
+async function earnTask(kidId, taskId, pts, label) {
+  const kid = kids.find(k => k.id === kidId);
+  if (!kid) return;
+  const todayEarned = kid.todayEarned || [];
+  if (todayEarned.includes(taskId)) return;
+  const updated = {
+    ...kid,
+    todayEarned: [...todayEarned, taskId],
+    totalPts: (kid.totalPts || 0) + pts,
+    history: [...(kid.history || []), { label, pts, ts: Date.now() }],
+  };
+  await saveKid(updated);
+  toast(`🌟 +${pts} points for ${kid.name}!`);
+}
+
+async function redeem(kidId, cost, label) {
+  const kid = kids.find(k => k.id === kidId);
+  if (!kid || (kid.totalPts || 0) < cost) return;
+  if (!confirm(`Redeem "${label}" for ${kid.name}? This costs ${cost} ⭐`)) return;
+  const updated = {
+    ...kid,
+    totalPts: kid.totalPts - cost,
+    history: [...(kid.history || []), { label: `🎁 ${label}`, pts: -cost, ts: Date.now() }],
+  };
+  await saveKid(updated);
+  toast(`🎉 Enjoy your reward, ${kid.name}!`);
+}
+
+async function resetDay(kidId) {
+  const kid = kids.find(k => k.id === kidId);
+  if (!kid) return;
+  if (!confirm(`Start a new day for ${kid.name}? Today's completed tasks will reset.`)) return;
+  await saveKid({ ...kid, todayEarned: [] });
+  toast('🌅 New day started!');
+}
+
+async function removeKid(kidId, name) {
+  if (!confirm(`Remove ${name} from the tracker? All their data will be deleted.`)) return;
+  await deleteKid(kidId);
+  toast('Removed.');
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADD KID MODAL
+// ═══════════════════════════════════════════════════════
+function openAddModal() {
+  selectedEmoji = AVATARS[0];
+  document.getElementById('kid-name').value = '';
+  document.getElementById('kid-color').selectedIndex = 0;
+  renderEmojiPicker();
+  document.getElementById('add-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('kid-name').focus(), 80);
+}
+function closeAddModal() {
+  document.getElementById('add-modal').classList.add('hidden');
+}
+function renderEmojiPicker() {
+  document.getElementById('emoji-picker').innerHTML = AVATARS.map(e => `
+    <button class="emoji-opt ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}')">${e}</button>
+  `).join('');
+}
+function selectEmoji(e) { selectedEmoji = e; renderEmojiPicker(); }
+
+async function confirmAdd() {
+  const name = document.getElementById('kid-name').value.trim();
+  if (!name) { document.getElementById('kid-name').focus(); return; }
+  const color = document.getElementById('kid-color').value;
+  const id = 'kid_' + Date.now();
+  await db.collection('starpoints_kids').doc(id).set({
+    name, emoji: selectedEmoji, color,
+    totalPts: 0, todayEarned: [], history: [],
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+  activeKid = id;
+  closeAddModal();
+  toast(`Welcome, ${name}! 🌟`);
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════════════
+//  EVENTS & INIT
+// ═══════════════════════════════════════════════════════
+document.getElementById('add-kid-btn').onclick = openAddModal;
+document.getElementById('cancel-add').onclick   = closeAddModal;
+document.getElementById('confirm-add').onclick  = confirmAdd;
+document.getElementById('add-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeAddModal();
+});
+document.getElementById('kid-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmAdd();
+});
+
+startListener();
+</script>
+</body>
+</html>
