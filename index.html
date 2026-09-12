@@ -285,33 +285,31 @@ function startListeners() {
       render();
     }, ()=> document.getElementById('sync-indicator').textContent = '🔴 offline');
 
-  // Tasks config — seed defaults if doc missing or list empty
+  // Tasks config — fall back to defaults if Firestore list is empty
   db.collection('starpoints_config').doc('tasks')
-    .onSnapshot(async snap => {
-      if (!snap.exists || !snap.data().list || snap.data().list.length === 0) {
-        await db.collection('starpoints_config').doc('tasks').set({list: DEFAULT_TASKS});
-        // snapshot will re-fire with the seeded data
-      } else {
-        tasks = snap.data().list;
-        render();
-      }
+    .onSnapshot(snap => {
+      const list = snap.exists ? (snap.data().list || []) : [];
+      tasks = list.length > 0 ? list : DEFAULT_TASKS;
+      render();
     });
 
-  // Rewards config — seed defaults if doc missing or list empty
+  // Rewards config — fall back to defaults if Firestore list is empty
   db.collection('starpoints_config').doc('rewards')
-    .onSnapshot(async snap => {
-      if (!snap.exists || !snap.data().list || snap.data().list.length === 0) {
-        await db.collection('starpoints_config').doc('rewards').set({list: DEFAULT_REWARDS});
-        // snapshot will re-fire with the seeded data
-      } else {
-        rewards = snap.data().list;
-        render();
-      }
+    .onSnapshot(snap => {
+      const list = snap.exists ? (snap.data().list || []) : [];
+      rewards = list.length > 0 ? list : DEFAULT_REWARDS;
+      render();
     });
 }
 
 async function saveTasks()   { await db.collection('starpoints_config').doc('tasks').set({list:tasks}); }
 async function saveRewards() { await db.collection('starpoints_config').doc('rewards').set({list:rewards}); }
+async function resetToDefaults() {
+  if (!confirm('Reset ALL tasks and rewards back to the originals from the whiteboard? Your kids\' points are NOT affected.')) return;
+  await db.collection('starpoints_config').doc('tasks').set({list: DEFAULT_TASKS});
+  await db.collection('starpoints_config').doc('rewards').set({list: DEFAULT_REWARDS});
+  toast('✅ Reset to defaults!');
+}
 async function saveKid(kid)  { const {id,...d}=kid; await db.collection('starpoints_kids').doc(id).set(d); }
 async function deleteKid(id) { await db.collection('starpoints_kids').doc(id).delete(); }
 
@@ -452,6 +450,7 @@ function renderConfig() {
   <div class="config-panel">
     <div class="config-section">
       <h3>📋 Tasks
+        <button class="config-logout-btn" onclick="resetToDefaults()" style="background:#fff3e0;color:#e65100;margin-right:6px;">↩️ Defaults</button>
         <button class="config-logout-btn" onclick="lockConfig()">🔒 Lock</button>
       </h3>
       ${tasks.map((t,i)=>`
