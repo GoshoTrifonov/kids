@@ -285,33 +285,37 @@ function startListeners() {
       render();
     }, ()=> document.getElementById('sync-indicator').textContent = '🔴 offline');
 
-  // Tasks config — fall back to defaults if Firestore list is empty
-  db.collection('starpoints_config').doc('tasks')
-    .onSnapshot(snap => {
-      const list = snap.exists ? (snap.data().list || []) : [];
-      tasks = list.length > 0 ? list : DEFAULT_TASKS;
-      render();
-    });
-
-  // Rewards config — fall back to defaults if Firestore list is empty
-  db.collection('starpoints_config').doc('rewards')
-    .onSnapshot(snap => {
-      const list = snap.exists ? (snap.data().list || []) : [];
-      rewards = list.length > 0 ? list : DEFAULT_REWARDS;
-      render();
-    });
+  // Tasks & rewards: load from localStorage, fall back to hardcoded defaults
+  loadConfig();
 }
 
-async function saveTasks()   { await db.collection('starpoints_config').doc('tasks').set({list:tasks}); }
-async function saveRewards() { await db.collection('starpoints_config').doc('rewards').set({list:rewards}); }
-async function resetToDefaults() {
-  if (!confirm('Reset ALL tasks and rewards back to the originals from the whiteboard? Your kids\' points are NOT affected.')) return;
-  await db.collection('starpoints_config').doc('tasks').set({list: DEFAULT_TASKS});
-  await db.collection('starpoints_config').doc('rewards').set({list: DEFAULT_REWARDS});
-  toast('✅ Reset to defaults!');
+function loadConfig() {
+  try {
+    const t = localStorage.getItem('sp_tasks');
+    const r = localStorage.getItem('sp_rewards');
+    tasks   = t ? JSON.parse(t) : DEFAULT_TASKS.map(x=>({...x}));
+    rewards = r ? JSON.parse(r) : DEFAULT_REWARDS.map(x=>({...x}));
+  } catch(e) {
+    tasks   = DEFAULT_TASKS.map(x=>({...x}));
+    rewards = DEFAULT_REWARDS.map(x=>({...x}));
+  }
+  render();
 }
+function saveTasks()   { localStorage.setItem('sp_tasks',   JSON.stringify(tasks)); }
+function saveRewards() { localStorage.setItem('sp_rewards', JSON.stringify(rewards)); }
 async function saveKid(kid)  { const {id,...d}=kid; await db.collection('starpoints_kids').doc(id).set(d); }
 async function deleteKid(id) { await db.collection('starpoints_kids').doc(id).delete(); }
+
+function resetToDefaults() {
+  if (!confirm("Reset tasks and rewards back to the whiteboard defaults? Kids' points are NOT affected.")) return;
+  localStorage.removeItem('sp_tasks');
+  localStorage.removeItem('sp_rewards');
+  tasks   = DEFAULT_TASKS.map(x=>({...x}));
+  rewards = DEFAULT_REWARDS.map(x=>({...x}));
+  render();
+  toast('✅ Reset to defaults!');
+}
+
 
 // ═══════════════════════════════════════════════════════
 //  PAGE SWITCHING
