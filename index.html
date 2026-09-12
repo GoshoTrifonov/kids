@@ -299,23 +299,15 @@
 // ═══════════════════════════════════════════════════════
 //  FIREBASE CONFIG — replace with your project's config
 // ═══════════════════════════════════════════════════════
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBS1xK0qFKALZ_UgXB24UUExdhnvflIZ5o",
-  authDomain: "kids-5d86a.firebaseapp.com",
-  projectId: "kids-5d86a",
-  storageBucket: "kids-5d86a.firebasestorage.app",
+  apiKey:            "AIzaSyBS1xK0qFKALZ_UgXB24UUExdhnvflIZ5o",
+  authDomain:        "kids-5d86a.firebaseapp.com",
+  projectId:         "kids-5d86a",
+  storageBucket:     "kids-5d86a.firebasestorage.app",
   messagingSenderId: "8889413459",
-  appId: "1:8889413459:web:6abd09d357c70f674bfba6"
+  appId:             "1:8889413459:web:6abd09d357c70f674bfba6"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
