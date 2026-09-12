@@ -285,18 +285,28 @@ function startListeners() {
       render();
     }, ()=> document.getElementById('sync-indicator').textContent = '🔴 offline');
 
-  // Tasks config
+  // Tasks config — seed defaults if doc missing or list empty
   db.collection('starpoints_config').doc('tasks')
-    .onSnapshot(snap => {
-      tasks = snap.exists ? snap.data().list : DEFAULT_TASKS;
-      render();
+    .onSnapshot(async snap => {
+      if (!snap.exists || !snap.data().list || snap.data().list.length === 0) {
+        await db.collection('starpoints_config').doc('tasks').set({list: DEFAULT_TASKS});
+        // snapshot will re-fire with the seeded data
+      } else {
+        tasks = snap.data().list;
+        render();
+      }
     });
 
-  // Rewards config
+  // Rewards config — seed defaults if doc missing or list empty
   db.collection('starpoints_config').doc('rewards')
-    .onSnapshot(snap => {
-      rewards = snap.exists ? snap.data().list : DEFAULT_REWARDS;
-      render();
+    .onSnapshot(async snap => {
+      if (!snap.exists || !snap.data().list || snap.data().list.length === 0) {
+        await db.collection('starpoints_config').doc('rewards').set({list: DEFAULT_REWARDS});
+        // snapshot will re-fire with the seeded data
+      } else {
+        rewards = snap.data().list;
+        render();
+      }
     });
 }
 
