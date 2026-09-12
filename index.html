@@ -5,253 +5,157 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>⭐ StarPoints – Kids Reward Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-
-<!-- Firebase compat SDK (same pattern as your other apps) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
 <style>
-  :root {
-    --sun: #FFD600;
-    --sky: #4FC3F7;
-    --mint: #69F0AE;
-    --coral: #FF7043;
-    --lavender: #CE93D8;
-    --ink: #1A1A2E;
-    --soft: #F0F4FF;
-    --white: #FFFFFF;
-    --card-shadow: 0 4px 20px rgba(26,26,46,0.10);
-    --radius: 20px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --sun:#FFD600; --sky:#4FC3F7; --mint:#69F0AE; --coral:#FF7043;
+  --lavender:#CE93D8; --ink:#1A1A2E; --soft:#F0F4FF;
+  --card-shadow:0 4px 20px rgba(26,26,46,.10); --radius:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#e0f7fa 0%,#f3e5f5 50%,#fff9c4 100%);min-height:100vh;color:var(--ink);}
 
-  body {
-    font-family: 'Nunito', sans-serif;
-    background: linear-gradient(135deg, #e0f7fa 0%, #f3e5f5 50%, #fff9c4 100%);
-    min-height: 100vh;
-    color: var(--ink);
-  }
+/* NAV */
+header{background:var(--ink);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+header h1{font-size:1.35rem;font-weight:900;color:var(--sun);}
+header h1 span{color:#fff;}
+.header-right{display:flex;gap:8px;align-items:center;}
+#sync-indicator{font-size:.72rem;color:#888;font-weight:600;}
+#add-kid-btn{background:var(--sun);color:var(--ink);border:none;border-radius:50px;padding:7px 15px;font:700 .85rem 'Nunito',sans-serif;cursor:pointer;transition:transform .15s;}
+#add-kid-btn:hover{transform:scale(1.06);}
+#config-btn{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:50px;padding:7px 13px;font:700 .82rem 'Nunito',sans-serif;cursor:pointer;transition:background .15s;}
+#config-btn:hover{background:rgba(255,255,255,.22);}
 
-  /* HEADER */
-  header {
-    background: var(--ink);
-    padding: 16px 20px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  }
-  header h1 { font-size: 1.4rem; font-weight: 900; color: var(--sun); }
-  header h1 span { color: #fff; }
-  .header-right { display: flex; gap: 8px; align-items: center; }
-  #sync-indicator { font-size: 0.75rem; color: #888; font-weight: 600; }
-  #add-kid-btn {
-    background: var(--sun); color: var(--ink);
-    border: none; border-radius: 50px;
-    padding: 8px 16px; font: 700 0.88rem 'Nunito', sans-serif;
-    cursor: pointer; transition: transform .15s;
-  }
-  #add-kid-btn:hover { transform: scale(1.06); }
+/* KID TABS */
+#tabs{display:flex;gap:8px;padding:13px 15px 0;overflow-x:auto;scrollbar-width:none;}
+#tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:7px 16px;border-radius:50px;background:#fff;border:2.5px solid transparent;font:700 .86rem 'Nunito',sans-serif;color:var(--ink);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;}
+.tab.active{background:var(--ink);color:#fff;border-color:var(--sun);}
+.tab .pts-badge{background:var(--sun);color:var(--ink);border-radius:50px;padding:2px 8px;font-size:.73rem;font-weight:800;}
 
-  /* TABS */
-  #tabs {
-    display: flex; gap: 8px; padding: 14px 16px 0;
-    overflow-x: auto; scrollbar-width: none;
-  }
-  #tabs::-webkit-scrollbar { display: none; }
-  .tab {
-    flex-shrink: 0;
-    padding: 8px 18px; border-radius: 50px;
-    background: #fff; border: 2.5px solid transparent;
-    font: 700 0.88rem 'Nunito', sans-serif; color: var(--ink);
-    cursor: pointer; transition: all .15s;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .tab.active { background: var(--ink); color: #fff; border-color: var(--sun); }
-  .tab .pts-badge {
-    background: var(--sun); color: var(--ink);
-    border-radius: 50px; padding: 2px 8px;
-    font-size: 0.75rem; font-weight: 800;
-  }
-  .tab.active .pts-badge { background: var(--sun); }
+/* MAIN */
+main{padding:16px;max-width:640px;margin:0 auto;}
 
-  /* MAIN */
-  main { padding: 18px 16px; max-width: 640px; margin: 0 auto; }
+/* CARD */
+.kid-card{background:#fff;border-radius:var(--radius);box-shadow:var(--card-shadow);overflow:hidden;margin-bottom:16px;}
+.kid-header{padding:18px 20px 12px;display:flex;align-items:center;gap:13px;}
+.avatar{width:54px;height:54px;border-radius:50%;font-size:1.7rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.kid-info h2{font-size:1.15rem;font-weight:800;}
+.kid-info .score{font-size:.83rem;color:#666;font-weight:600;margin-top:2px;}
+.kid-info .score strong{color:var(--coral);font-size:.98rem;}
+.star-row{display:flex;gap:2px;margin-top:5px;flex-wrap:wrap;}
 
-  /* KID CARD */
-  .kid-card {
-    background: #fff; border-radius: var(--radius);
-    box-shadow: var(--card-shadow); overflow: hidden;
-  }
-  .kid-header {
-    padding: 20px 22px 14px;
-    display: flex; align-items: center; gap: 14px;
-  }
-  .avatar {
-    width: 56px; height: 56px; border-radius: 50%;
-    font-size: 1.8rem; display: flex; align-items: center;
-    justify-content: center; flex-shrink: 0;
-  }
-  .kid-info h2 { font-size: 1.2rem; font-weight: 800; }
-  .kid-info .score { font-size: 0.85rem; color: #666; font-weight: 600; margin-top: 2px; }
-  .kid-info .score strong { color: var(--coral); font-size: 1rem; }
-  .star-row { display: flex; gap: 2px; margin-top: 6px; flex-wrap: wrap; }
+/* PROGRESS */
+.progress-wrap{padding:0 20px 12px;}
+.progress-label{font-size:.7rem;color:#999;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:flex;justify-content:space-between;}
+.progress-bg{height:10px;background:#f0f0f0;border-radius:10px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--mint),var(--sky));border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1);}
 
-  /* PROGRESS */
-  .progress-wrap { padding: 0 22px 12px; }
-  .progress-label {
-    font-size: 0.72rem; color: #999; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .5px;
-    margin-bottom: 5px; display: flex; justify-content: space-between;
-  }
-  .progress-bg { height: 10px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--mint), var(--sky));
-    border-radius: 10px; transition: width .5s cubic-bezier(.4,0,.2,1);
-  }
+/* SECTION */
+.section{padding:0 20px 18px;}
+.section-title{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#bbb;margin-bottom:9px;}
 
-  /* SECTION */
-  .section { padding: 0 22px 20px; }
-  .section-title {
-    font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 1px; color: #bbb; margin-bottom: 10px;
-  }
+/* TASKS */
+.task-grid,.reward-grid{display:flex;flex-direction:column;gap:7px;}
+.task-row,.reward-row{display:flex;align-items:center;justify-content:space-between;background:var(--soft);border-radius:12px;padding:9px 12px;gap:8px;}
+.task-left,.reward-left{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.9rem;flex:1;}
+.task-right,.reward-right{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.pts-tag{background:var(--mint);color:var(--ink);border-radius:20px;padding:3px 9px;font-size:.73rem;font-weight:800;}
+.reward-cost{background:var(--lavender);color:var(--ink);border-radius:20px;padding:3px 9px;font-size:.73rem;font-weight:800;flex-shrink:0;}
+.earn-btn{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:5px 11px;font:700 .77rem 'Nunito',sans-serif;cursor:pointer;transition:transform .12s,background .12s;}
+.earn-btn:hover{background:var(--coral);transform:scale(1.05);}
+.earned-tag{background:#e8f5e9;color:#388e3c;border-radius:8px;padding:5px 9px;font-size:.77rem;font-weight:700;}
+.redeem-btn{background:var(--coral);color:#fff;border:none;border-radius:8px;padding:5px 11px;font:700 .77rem 'Nunito',sans-serif;cursor:pointer;transition:transform .12s;flex-shrink:0;}
+.redeem-btn:disabled{background:#ddd;color:#aaa;cursor:not-allowed;}
+.redeem-btn:not(:disabled):hover{transform:scale(1.05);}
 
-  /* TASKS */
-  .task-grid { display: flex; flex-direction: column; gap: 8px; }
-  .task-row {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--soft); border-radius: 12px; padding: 10px 12px; gap: 8px;
-  }
-  .task-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92rem; }
-  .task-right { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
-  .pts-tag {
-    background: var(--mint); color: var(--ink);
-    border-radius: 20px; padding: 3px 9px; font-size: 0.75rem; font-weight: 800;
-  }
-  .earn-btn {
-    background: var(--ink); color: #fff;
-    border: none; border-radius: 8px;
-    padding: 5px 11px; font: 700 0.78rem 'Nunito', sans-serif;
-    cursor: pointer; transition: transform .12s, background .12s;
-  }
-  .earn-btn:hover { background: var(--coral); transform: scale(1.05); }
-  .earned-tag {
-    background: #e8f5e9; color: #388e3c;
-    border-radius: 8px; padding: 5px 9px; font-size: 0.78rem; font-weight: 700;
-  }
+/* HISTORY */
+.history-list{display:flex;flex-direction:column;gap:3px;}
+.history-item{font-size:.82rem;display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;color:#555;gap:8px;}
+.history-item:last-child{border-bottom:none;}
+.history-meta{display:flex;flex-direction:column;gap:1px;}
+.history-time{font-size:.68rem;color:#bbb;}
+.history-pts{font-weight:800;flex-shrink:0;}
+.history-pts.earn{color:#43a047;}
+.history-pts.spend{color:var(--coral);}
 
-  /* REWARDS */
-  .reward-grid { display: flex; flex-direction: column; gap: 8px; }
-  .reward-row {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--soft); border-radius: 12px; padding: 10px 12px; gap: 8px;
-  }
-  .reward-left { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.9rem; flex: 1; }
-  .reward-cost {
-    background: var(--lavender); color: var(--ink);
-    border-radius: 20px; padding: 3px 9px; font-size: 0.75rem; font-weight: 800; flex-shrink: 0;
-  }
-  .redeem-btn {
-    background: var(--coral); color: #fff;
-    border: none; border-radius: 8px;
-    padding: 5px 11px; font: 700 0.78rem 'Nunito', sans-serif;
-    cursor: pointer; transition: transform .12s; flex-shrink: 0;
-  }
-  .redeem-btn:disabled { background: #ddd; color: #aaa; cursor: not-allowed; }
-  .redeem-btn:not(:disabled):hover { transform: scale(1.05); }
+/* KID ACTIONS */
+.kid-actions{padding:0 20px 18px;display:flex;gap:9px;flex-wrap:wrap;}
+.reset-day-btn,.remove-kid-btn{border:none;border-radius:10px;padding:7px 15px;font:700 .8rem 'Nunito',sans-serif;cursor:pointer;transition:transform .12s;}
+.reset-day-btn{background:#fff3e0;color:#e65100;}
+.remove-kid-btn{background:#fce4ec;color:#c62828;}
+.reset-day-btn:hover,.remove-kid-btn:hover{transform:scale(1.04);}
 
-  /* HISTORY */
-  .history-list { display: flex; flex-direction: column; gap: 4px; }
-  .history-item {
-    font-size: 0.83rem; display: flex; justify-content: space-between;
-    padding: 6px 0; border-bottom: 1px solid #f0f0f0; color: #555; gap: 8px;
-  }
-  .history-item:last-child { border-bottom: none; }
-  .history-meta { display: flex; flex-direction: column; gap: 1px; }
-  .history-time { font-size: 0.7rem; color: #bbb; }
-  .history-pts { font-weight: 800; flex-shrink: 0; }
-  .history-pts.earn { color: #43a047; }
-  .history-pts.spend { color: var(--coral); }
+/* ── CONFIG PANEL ── */
+.config-panel{background:#fff;border-radius:var(--radius);box-shadow:var(--card-shadow);overflow:hidden;margin-bottom:16px;}
+.config-section{padding:18px 20px;}
+.config-section+.config-section{border-top:2px solid var(--soft);}
+.config-section h3{font-size:.9rem;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.config-item{display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:12px;padding:9px 12px;margin-bottom:7px;}
+.config-item-label{flex:1;font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:7px;}
+.config-item-pts{background:var(--mint);color:var(--ink);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:800;}
+.config-item-cost{background:var(--lavender);color:var(--ink);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:800;}
+.config-del-btn{background:#fce4ec;color:#c62828;border:none;border-radius:8px;padding:5px 10px;font:700 .75rem 'Nunito',sans-serif;cursor:pointer;flex-shrink:0;}
+.config-del-btn:hover{background:#e57373;color:#fff;}
+.config-edit-btn{background:#e3f2fd;color:#1565c0;border:none;border-radius:8px;padding:5px 10px;font:700 .75rem 'Nunito',sans-serif;cursor:pointer;flex-shrink:0;}
+.config-edit-btn:hover{background:#42a5f5;color:#fff;}
+.add-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.add-row input{flex:2;min-width:0;border:2px solid #e0e0e0;border-radius:10px;padding:8px 12px;font:600 .88rem 'Nunito',sans-serif;outline:none;transition:border-color .15s;}
+.add-row input:focus{border-color:var(--sky);}
+.add-row input.pts-input{flex:.7;min-width:60px;}
+.add-row input.emoji-input{flex:.5;min-width:50px;text-align:center;}
+.add-row-btn{background:var(--ink);color:#fff;border:none;border-radius:10px;padding:8px 16px;font:700 .82rem 'Nunito',sans-serif;cursor:pointer;white-space:nowrap;}
+.add-row-btn:hover{background:var(--coral);}
+.config-locked{text-align:center;padding:50px 20px;}
+.config-locked .lock-icon{font-size:2.5rem;margin-bottom:12px;}
+.config-locked p{font-size:.9rem;color:#888;font-weight:600;margin-bottom:16px;}
+.pw-row{display:flex;gap:8px;max-width:280px;margin:0 auto;}
+.pw-row input{flex:1;border:2px solid #e0e0e0;border-radius:10px;padding:9px 14px;font:600 .9rem 'Nunito',sans-serif;outline:none;transition:border-color .15s;}
+.pw-row input:focus{border-color:var(--sky);}
+.pw-row input.error{border-color:var(--coral);}
+.pw-row button{background:var(--ink);color:#fff;border:none;border-radius:10px;padding:9px 18px;font:700 .88rem 'Nunito',sans-serif;cursor:pointer;}
+.config-logout-btn{background:#f5f5f5;color:#888;border:none;border-radius:8px;padding:5px 12px;font:700 .78rem 'Nunito',sans-serif;cursor:pointer;margin-left:auto;}
 
-  /* KID ACTIONS */
-  .kid-actions { padding: 0 22px 20px; display: flex; gap: 10px; flex-wrap: wrap; }
-  .reset-day-btn, .remove-kid-btn {
-    border: none; border-radius: 10px;
-    padding: 8px 16px; font: 700 0.82rem 'Nunito', sans-serif;
-    cursor: pointer; transition: transform .12s;
-  }
-  .reset-day-btn { background: #fff3e0; color: #e65100; }
-  .remove-kid-btn { background: #fce4ec; color: #c62828; }
-  .reset-day-btn:hover, .remove-kid-btn:hover { transform: scale(1.04); }
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.overlay.hidden{display:none;}
+.modal{background:#fff;border-radius:var(--radius);padding:24px 24px 20px;width:100%;max-width:380px;box-shadow:0 16px 60px rgba(0,0,0,.25);}
+.modal h3{font-size:1.1rem;font-weight:800;margin-bottom:15px;}
+.modal label{font-size:.82rem;font-weight:700;display:block;margin-bottom:4px;color:#555;}
+.modal input,.modal select{width:100%;border:2px solid #e0e0e0;border-radius:10px;padding:9px 12px;font:600 .9rem 'Nunito',sans-serif;margin-bottom:12px;outline:none;transition:border-color .15s;}
+.modal input:focus,.modal select:focus{border-color:var(--sky);}
+.emoji-picker{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.emoji-opt{width:38px;height:38px;border-radius:50%;background:var(--soft);border:2.5px solid transparent;font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.emoji-opt.selected{border-color:var(--sky);background:#e3f2fd;}
+.modal-btns{display:flex;gap:9px;margin-top:4px;}
+.modal-btns button{flex:1;border:none;border-radius:10px;padding:10px;font:700 .88rem 'Nunito',sans-serif;cursor:pointer;transition:transform .12s;}
+.btn-confirm{background:var(--ink);color:#fff;}
+.btn-cancel{background:var(--soft);color:var(--ink);}
+.modal-btns button:hover{transform:scale(1.03);}
 
-  /* MODAL */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 200; padding: 20px;
-  }
-  .overlay.hidden { display: none; }
-  .modal {
-    background: #fff; border-radius: var(--radius);
-    padding: 26px 26px 22px; width: 100%; max-width: 380px;
-    box-shadow: 0 16px 60px rgba(0,0,0,0.25);
-  }
-  .modal h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 16px; }
-  .modal label { font-size: 0.83rem; font-weight: 700; display: block; margin-bottom: 5px; color: #555; }
-  .modal input, .modal select {
-    width: 100%; border: 2px solid #e0e0e0; border-radius: 10px;
-    padding: 10px 13px; font: 600 0.92rem 'Nunito', sans-serif;
-    margin-bottom: 13px; outline: none; transition: border-color .15s;
-  }
-  .modal input:focus, .modal select:focus { border-color: var(--sky); }
-  .emoji-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 13px; }
-  .emoji-opt {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: var(--soft); border: 2.5px solid transparent;
-    font-size: 1.2rem; cursor: pointer; display: flex;
-    align-items: center; justify-content: center; transition: all .12s;
-  }
-  .emoji-opt.selected { border-color: var(--sky); background: #e3f2fd; }
-  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
-  .modal-btns button {
-    flex: 1; border: none; border-radius: 10px;
-    padding: 11px; font: 700 0.9rem 'Nunito', sans-serif;
-    cursor: pointer; transition: transform .12s;
-  }
-  .btn-confirm { background: var(--ink); color: #fff; }
-  .btn-cancel { background: var(--soft); color: var(--ink); }
-  .modal-btns button:hover { transform: scale(1.03); }
+/* TOAST */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:50px;font-weight:700;font-size:.86rem;z-index:300;transition:transform .3s cubic-bezier(.4,0,.2,1);white-space:nowrap;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);}
 
-  /* TOAST */
-  #toast {
-    position: fixed; bottom: 24px; left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--ink); color: #fff;
-    padding: 12px 22px; border-radius: 50px;
-    font-weight: 700; font-size: 0.88rem;
-    z-index: 300; transition: transform .3s cubic-bezier(.4,0,.2,1);
-    white-space: nowrap; pointer-events: none;
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); }
+/* EMPTY / LOADING */
+.empty-state,#loading{text-align:center;padding:55px 20px;color:#aaa;}
+.empty-state .big{font-size:2.8rem;margin-bottom:11px;}
+.empty-state p{font-size:.95rem;font-weight:600;line-height:1.6;}
+.spinner{width:34px;height:34px;border:4px solid #e0e0e0;border-top-color:var(--sky);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 13px;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-  /* EMPTY / LOADING */
-  .empty-state, #loading {
-    text-align: center; padding: 60px 20px; color: #aaa;
-  }
-  .empty-state .big { font-size: 3rem; margin-bottom: 12px; }
-  .empty-state p { font-size: 0.98rem; font-weight: 600; line-height: 1.6; }
-  .spinner {
-    width: 36px; height: 36px; border: 4px solid #e0e0e0;
-    border-top-color: var(--sky); border-radius: 50%;
-    animation: spin .8s linear infinite; margin: 0 auto 14px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* NAV BOTTOM (page selector) */
+#page-nav{display:flex;background:var(--ink);border-top:2px solid #2a2a4a;}
+.page-nav-btn{flex:1;padding:11px 0;border:none;background:transparent;color:#888;font:700 .78rem 'Nunito',sans-serif;cursor:pointer;transition:color .15s;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.page-nav-btn .nav-icon{font-size:1.1rem;}
+.page-nav-btn.active{color:var(--sun);}
+.page-nav-btn:hover{color:#fff;}
 
-  @media (max-width: 420px) {
-    header h1 { font-size: 1.2rem; }
-    main { padding: 12px; }
-  }
+@media(max-width:420px){
+  header h1{font-size:1.1rem;}
+  main{padding:11px;}
+}
 </style>
 </head>
 <body>
@@ -260,21 +164,28 @@
   <h1>⭐ <span>Star</span>Points</h1>
   <div class="header-right">
     <span id="sync-indicator">⏳ connecting…</span>
-    <button id="add-kid-btn">+ Add Kid</button>
+    <button id="add-kid-btn" style="display:none">+ Add Kid</button>
   </div>
 </header>
 
 <div id="tabs"></div>
-<main id="main">
-  <div id="loading"><div class="spinner"></div>Loading…</div>
-</main>
+<main id="main"><div id="loading"><div class="spinner"></div>Loading…</div></main>
+
+<div id="page-nav">
+  <button class="page-nav-btn active" id="nav-tracker" onclick="showPage('tracker')">
+    <span class="nav-icon">⭐</span>Tracker
+  </button>
+  <button class="page-nav-btn" id="nav-config" onclick="showPage('config')">
+    <span class="nav-icon">⚙️</span>Settings
+  </button>
+</div>
 
 <!-- Add Kid Modal -->
 <div class="overlay hidden" id="add-modal">
   <div class="modal">
     <h3>Add a Kid 🌟</h3>
     <label>Name</label>
-    <input id="kid-name" type="text" placeholder="e.g. Sofia" maxlength="20" />
+    <input id="kid-name" type="text" placeholder="e.g. Sofia" maxlength="20"/>
     <label>Pick an avatar</label>
     <div class="emoji-picker" id="emoji-picker"></div>
     <label>Favourite colour</label>
@@ -293,11 +204,28 @@
   </div>
 </div>
 
+<!-- Edit Task/Reward Modal -->
+<div class="overlay hidden" id="edit-modal">
+  <div class="modal">
+    <h3 id="edit-modal-title">Edit</h3>
+    <label>Emoji</label>
+    <input id="edit-emoji" type="text" maxlength="4" style="width:70px;text-align:center;"/>
+    <label>Label</label>
+    <input id="edit-label" type="text" maxlength="40"/>
+    <label id="edit-pts-label">Points</label>
+    <input id="edit-pts" type="number" min="1" max="9999"/>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="cancel-edit">Cancel</button>
+      <button class="btn-confirm" id="confirm-edit">Save</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  FIREBASE CONFIG — replace with your project's config
+//  FIREBASE CONFIG
 // ═══════════════════════════════════════════════════════
 const firebaseConfig = {
   apiKey:            "AIzaSyBS1xK0qFKALZ_UgXB24UUExdhnvflIZ5o",
@@ -307,107 +235,120 @@ const firebaseConfig = {
   messagingSenderId: "8889413459",
   appId:             "1:8889413459:web:6abd09d357c70f674bfba6"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ═══════════════════════════════════════════════════════
-//  CONSTANTS
+//  DEFAULTS (used only on first-ever load)
 // ═══════════════════════════════════════════════════════
-const TASKS = [
-  { id: 'bed',   emoji: '🛏️', label: 'Make your bed',            pts: 5  },
-  { id: 'hw',    emoji: '📚', label: 'Do your homework',          pts: 10 },
-  { id: 'chore', emoji: '🧹', label: 'Help with chores',          pts: 10 },
-  { id: 'kind',  emoji: '😊', label: 'Be kind / No complaining',  pts: 5  },
-  { id: 'read',  emoji: '📖', label: 'Read for 20 minutes',       pts: 5  },
+const DEFAULT_TASKS = [
+  {id:'bed',   emoji:'🛏️', label:'Make your bed',            pts:5 },
+  {id:'hw',    emoji:'📚', label:'Do your homework',          pts:10},
+  {id:'chore', emoji:'🧹', label:'Help with chores',          pts:10},
+  {id:'kind',  emoji:'😊', label:'Be kind / No complaining',  pts:5 },
+  {id:'read',  emoji:'📖', label:'Read for 20 minutes',       pts:5 },
 ];
-
-const REWARDS = [
-  { id: 'icecream', emoji: '🍦', label: 'Ice cream date',             cost: 50  },
-  { id: 'movie',    emoji: '🎬', label: 'Family movie night pick',    cost: 75  },
-  { id: 'activity', emoji: '🎒', label: 'Choose a fun activity',      cost: 100 },
-  { id: 'cash',     emoji: '💵', label: '$10 cash',                   cost: 150 },
-  { id: 'trip',     emoji: '🌴', label: 'Day trip or special outing', cost: 200 },
+const DEFAULT_REWARDS = [
+  {id:'icecream', emoji:'🍦', label:'Ice cream date',             cost:50 },
+  {id:'movie',    emoji:'🎬', label:'Family movie night pick',    cost:75 },
+  {id:'activity', emoji:'🎒', label:'Choose a fun activity',      cost:100},
+  {id:'cash',     emoji:'💵', label:'$10 cash',                   cost:150},
+  {id:'trip',     emoji:'🌴', label:'Day trip or special outing', cost:200},
 ];
-
+const CONFIG_PASSWORD = 'kid183';
 const AVATARS = ['🦁','🐻','🐼','🦊','🐸','🐯','🐨','🐙','🦋','🌸','🦄','🚀'];
 
 // ═══════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════
-let kids = [];         // live array from Firestore
-let activeKid = null;
-let selectedEmoji = AVATARS[0];
-let unsubscribe = null;
+let kids    = [];
+let tasks   = [];
+let rewards = [];
+let activeKid      = null;
+let currentPage    = 'tracker';
+let configUnlocked = false;
+let selectedEmoji  = AVATARS[0];
+let editTarget     = null; // {type:'task'|'reward', item}
 
 // ═══════════════════════════════════════════════════════
-//  FIRESTORE — real-time listener
+//  FIRESTORE LISTENERS
 // ═══════════════════════════════════════════════════════
-function startListener() {
-  unsubscribe = db.collection('starpoints_kids')
-    .orderBy('createdAt')
+function startListeners() {
+  // Kids
+  db.collection('starpoints_kids').orderBy('createdAt')
     .onSnapshot(snap => {
-      kids = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      kids = snap.docs.map(d => ({id:d.id,...d.data()}));
       if (!activeKid && kids.length) activeKid = kids[0].id;
-      if (activeKid && !kids.find(k => k.id === activeKid)) {
+      if (activeKid && !kids.find(k=>k.id===activeKid))
         activeKid = kids.length ? kids[0].id : null;
-      }
       document.getElementById('sync-indicator').textContent = '🟢 live';
       render();
-    }, err => {
-      console.error(err);
-      document.getElementById('sync-indicator').textContent = '🔴 offline';
+    }, ()=> document.getElementById('sync-indicator').textContent = '🔴 offline');
+
+  // Tasks config
+  db.collection('starpoints_config').doc('tasks')
+    .onSnapshot(snap => {
+      tasks = snap.exists ? snap.data().list : DEFAULT_TASKS;
+      render();
+    });
+
+  // Rewards config
+  db.collection('starpoints_config').doc('rewards')
+    .onSnapshot(snap => {
+      rewards = snap.exists ? snap.data().list : DEFAULT_REWARDS;
+      render();
     });
 }
 
-async function saveKid(kid) {
-  const { id, ...data } = kid;
-  await db.collection('starpoints_kids').doc(id).set(data);
-}
+async function saveTasks()   { await db.collection('starpoints_config').doc('tasks').set({list:tasks}); }
+async function saveRewards() { await db.collection('starpoints_config').doc('rewards').set({list:rewards}); }
+async function saveKid(kid)  { const {id,...d}=kid; await db.collection('starpoints_kids').doc(id).set(d); }
+async function deleteKid(id) { await db.collection('starpoints_kids').doc(id).delete(); }
 
-async function deleteKid(id) {
-  await db.collection('starpoints_kids').doc(id).delete();
+// ═══════════════════════════════════════════════════════
+//  PAGE SWITCHING
+// ═══════════════════════════════════════════════════════
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+page).classList.add('active');
+  document.getElementById('add-kid-btn').style.display = page==='tracker' ? '' : 'none';
+  document.getElementById('tabs').style.display        = page==='tracker' ? '' : 'none';
+  render();
 }
 
 // ═══════════════════════════════════════════════════════
 //  RENDER
 // ═══════════════════════════════════════════════════════
 function render() {
-  renderTabs();
-  renderMain();
+  if (currentPage === 'tracker') { renderTabs(); renderTracker(); }
+  else renderConfig();
 }
 
 function renderTabs() {
-  const el = document.getElementById('tabs');
-  el.innerHTML = kids.map(k => `
-    <button class="tab ${k.id === activeKid ? 'active' : ''}" onclick="switchKid('${k.id}')">
+  document.getElementById('tabs').innerHTML = kids.map(k=>`
+    <button class="tab ${k.id===activeKid?'active':''}" onclick="switchKid('${k.id}')">
       ${k.emoji} ${k.name}
-      <span class="pts-badge">${k.totalPts || 0}⭐</span>
+      <span class="pts-badge">${k.totalPts||0}⭐</span>
     </button>`).join('');
 }
 
-function renderMain() {
+function renderTracker() {
   const el = document.getElementById('main');
-
-  if (kids.length === 0) {
-    el.innerHTML = `
-      <div class="empty-state">
-        <div class="big">⭐</div>
-        <p>No kids added yet.<br>Tap <strong>+ Add Kid</strong> to get started!</p>
-      </div>`;
+  if (!kids.length) {
+    el.innerHTML=`<div class="empty-state"><div class="big">⭐</div>
+      <p>No kids yet.<br>Tap <strong>+ Add Kid</strong> to start!</p></div>`;
     return;
   }
-
-  const kid = kids.find(k => k.id === activeKid) || kids[0];
+  const kid = kids.find(k=>k.id===activeKid)||kids[0];
   activeKid = kid.id;
-
-  const todayEarned = kid.todayEarned || [];
-  const totalPts    = kid.totalPts || 0;
-  const nextReward  = REWARDS.find(r => r.cost > totalPts);
-  const progressPct = nextReward ? Math.min(100, Math.round(totalPts / nextReward.cost * 100)) : 100;
-  const starCount   = Math.min(10, Math.floor(totalPts / 10));
-  const stars       = '⭐'.repeat(starCount) + '☆'.repeat(10 - starCount);
-  const history     = (kid.history || []).slice(-15).reverse();
+  const todayEarned = kid.todayEarned||[];
+  const totalPts    = kid.totalPts||0;
+  const nextReward  = rewards.find(r=>r.cost>totalPts);
+  const progressPct = nextReward ? Math.min(100,Math.round(totalPts/nextReward.cost*100)) : 100;
+  const starCount   = Math.min(10,Math.floor(totalPts/10));
+  const stars       = '⭐'.repeat(starCount)+'☆'.repeat(10-starCount);
+  const history     = (kid.history||[]).slice(-15).reverse();
 
   el.innerHTML = `
   <div class="kid-card">
@@ -415,27 +356,21 @@ function renderMain() {
       <div class="avatar" style="background:${kid.color}22">${kid.emoji}</div>
       <div class="kid-info">
         <h2>${kid.name}</h2>
-        <div class="score">Total points: <strong>${totalPts} ⭐</strong></div>
+        <div class="score">Total: <strong>${totalPts} ⭐</strong></div>
         <div class="star-row">${stars}</div>
       </div>
     </div>
-
     <div class="progress-wrap">
       ${nextReward
-        ? `<div class="progress-label">
-             <span>Next: ${nextReward.emoji} ${nextReward.label}</span>
-             <span>${totalPts}/${nextReward.cost}</span>
-           </div>
+        ? `<div class="progress-label"><span>Next: ${nextReward.emoji} ${nextReward.label}</span><span>${totalPts}/${nextReward.cost}</span></div>
            <div class="progress-bg"><div class="progress-fill" style="width:${progressPct}%"></div></div>`
-        : `<div class="progress-label"><span>🎉 All rewards unlocked!</span></div>`
-      }
+        : `<div class="progress-label"><span>🎉 All rewards unlocked!</span></div>`}
     </div>
-
     <div class="section">
       <div class="section-title">Today's Tasks</div>
       <div class="task-grid">
-        ${TASKS.map(t => {
-          const done = todayEarned.includes(t.id);
+        ${tasks.map(t=>{
+          const done=todayEarned.includes(t.id);
           return `<div class="task-row">
             <div class="task-left">${t.emoji} ${t.label}</div>
             <div class="task-right">
@@ -448,39 +383,32 @@ function renderMain() {
         }).join('')}
       </div>
     </div>
-
     <div class="section">
       <div class="section-title">Rewards</div>
       <div class="reward-grid">
-        ${REWARDS.map(r => {
-          const can = totalPts >= r.cost;
+        ${rewards.map(r=>{
+          const can=totalPts>=r.cost;
           return `<div class="reward-row">
             <div class="reward-left">${r.emoji} ${r.label}</div>
             <span class="reward-cost">${r.cost}⭐</span>
-            <button class="redeem-btn" ${can ? '' : 'disabled'}
-              onclick="redeem('${kid.id}',${r.cost},'${r.label}')">
-              ${can ? 'Redeem 🎉' : 'Locked'}
+            <button class="redeem-btn" ${can?'':'disabled'} onclick="redeem('${kid.id}',${r.cost},'${r.label}')">
+              ${can?'Redeem 🎉':'Locked'}
             </button>
           </div>`;
         }).join('')}
       </div>
     </div>
-
-    ${history.length ? `
+    ${history.length?`
     <div class="section">
       <div class="section-title">Recent Activity</div>
       <div class="history-list">
-        ${history.map(h => `
+        ${history.map(h=>`
           <div class="history-item">
-            <div class="history-meta">
-              <span>${h.label}</span>
-              <span class="history-time">${formatTime(h.ts)}</span>
-            </div>
-            <span class="history-pts ${h.pts > 0 ? 'earn' : 'spend'}">${h.pts > 0 ? '+' : ''}${h.pts}⭐</span>
+            <div class="history-meta"><span>${h.label}</span><span class="history-time">${fmtTime(h.ts)}</span></div>
+            <span class="history-pts ${h.pts>0?'earn':'spend'}">${h.pts>0?'+':''}${h.pts}⭐</span>
           </div>`).join('')}
       </div>
-    </div>` : ''}
-
+    </div>`:''}
     <div class="kid-actions">
       <button class="reset-day-btn" onclick="resetDay('${kid.id}')">🔄 New Day</button>
       <button class="remove-kid-btn" onclick="removeKid('${kid.id}','${kid.name}')">🗑️ Remove</button>
@@ -488,121 +416,242 @@ function renderMain() {
   </div>`;
 }
 
-function formatTime(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  return d.toLocaleDateString('en-CA') + ' ' + d.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+// ═══════════════════════════════════════════════════════
+//  CONFIG PAGE
+// ═══════════════════════════════════════════════════════
+function renderConfig() {
+  const el = document.getElementById('main');
+  if (!configUnlocked) {
+    el.innerHTML = `
+      <div class="config-panel">
+        <div class="config-locked">
+          <div class="lock-icon">🔒</div>
+          <p>Enter the parent password to access settings.</p>
+          <div class="pw-row">
+            <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')unlockConfig()"/>
+            <button onclick="unlockConfig()">Unlock</button>
+          </div>
+          <p id="pw-error" style="color:var(--coral);font-size:.8rem;margin-top:10px;display:none">Wrong password. Try again.</p>
+        </div>
+      </div>`;
+    setTimeout(()=>{const i=document.getElementById('pw-input');if(i)i.focus();},60);
+    return;
+  }
+
+  el.innerHTML = `
+  <div class="config-panel">
+    <div class="config-section">
+      <h3>📋 Tasks
+        <button class="config-logout-btn" onclick="lockConfig()">🔒 Lock</button>
+      </h3>
+      ${tasks.map((t,i)=>`
+        <div class="config-item">
+          <div class="config-item-label">${t.emoji} ${t.label}</div>
+          <span class="config-item-pts">+${t.pts}</span>
+          <button class="config-edit-btn" onclick="openEdit('task',${i})">✏️</button>
+          <button class="config-del-btn" onclick="deleteTask(${i})">✕</button>
+        </div>`).join('')}
+      <div class="add-row">
+        <input class="emoji-input" id="new-task-emoji" type="text" placeholder="😊" maxlength="4"/>
+        <input id="new-task-label" type="text" placeholder="Task name" maxlength="40"/>
+        <input class="pts-input" id="new-task-pts" type="number" placeholder="pts" min="1" max="9999"/>
+        <button class="add-row-btn" onclick="addTask()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>🎁 Rewards</h3>
+      ${rewards.map((r,i)=>`
+        <div class="config-item">
+          <div class="config-item-label">${r.emoji} ${r.label}</div>
+          <span class="config-item-cost">${r.cost}⭐</span>
+          <button class="config-edit-btn" onclick="openEdit('reward',${i})">✏️</button>
+          <button class="config-del-btn" onclick="deleteReward(${i})">✕</button>
+        </div>`).join('')}
+      <div class="add-row">
+        <input class="emoji-input" id="new-reward-emoji" type="text" placeholder="🎁" maxlength="4"/>
+        <input id="new-reward-label" type="text" placeholder="Reward name" maxlength="40"/>
+        <input class="pts-input" id="new-reward-cost" type="number" placeholder="pts" min="1" max="9999"/>
+        <button class="add-row-btn" onclick="addReward()">+ Add</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function unlockConfig() {
+  const val = document.getElementById('pw-input').value;
+  if (val === CONFIG_PASSWORD) {
+    configUnlocked = true;
+    renderConfig();
+  } else {
+    const i = document.getElementById('pw-input');
+    const e = document.getElementById('pw-error');
+    i.classList.add('error');
+    e.style.display='block';
+    i.value='';
+    i.focus();
+  }
+}
+function lockConfig() { configUnlocked=false; renderConfig(); }
+
+// ── TASK CONFIG ──
+async function addTask() {
+  const emoji = (document.getElementById('new-task-emoji').value.trim()||'✅');
+  const label = document.getElementById('new-task-label').value.trim();
+  const pts   = parseInt(document.getElementById('new-task-pts').value)||0;
+  if (!label||pts<1) { toast('Fill in task name and points.'); return; }
+  tasks.push({id:'task_'+Date.now(), emoji, label, pts});
+  await saveTasks();
+  toast('Task added!');
+}
+async function deleteTask(i) {
+  if (!confirm(`Delete "${tasks[i].label}"?`)) return;
+  tasks.splice(i,1);
+  await saveTasks();
+  toast('Task removed.');
+}
+
+// ── REWARD CONFIG ──
+async function addReward() {
+  const emoji = (document.getElementById('new-reward-emoji').value.trim()||'🎁');
+  const label = document.getElementById('new-reward-label').value.trim();
+  const cost  = parseInt(document.getElementById('new-reward-cost').value)||0;
+  if (!label||cost<1) { toast('Fill in reward name and points.'); return; }
+  rewards.push({id:'reward_'+Date.now(), emoji, label, cost});
+  await saveRewards();
+  toast('Reward added!');
+}
+async function deleteReward(i) {
+  if (!confirm(`Delete "${rewards[i].label}"?`)) return;
+  rewards.splice(i,1);
+  await saveRewards();
+  toast('Reward removed.');
+}
+
+// ── EDIT MODAL ──
+function openEdit(type, i) {
+  const item = type==='task' ? tasks[i] : rewards[i];
+  editTarget = {type, i};
+  document.getElementById('edit-modal-title').textContent = type==='task' ? '✏️ Edit Task' : '✏️ Edit Reward';
+  document.getElementById('edit-pts-label').textContent   = type==='task' ? 'Points earned' : 'Points cost';
+  document.getElementById('edit-emoji').value = item.emoji;
+  document.getElementById('edit-label').value = item.label;
+  document.getElementById('edit-pts').value   = type==='task' ? item.pts : item.cost;
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+async function confirmEdit() {
+  if (!editTarget) return;
+  const emoji = document.getElementById('edit-emoji').value.trim();
+  const label = document.getElementById('edit-label').value.trim();
+  const pts   = parseInt(document.getElementById('edit-pts').value)||0;
+  if (!label||pts<1) { toast('Fill in all fields.'); return; }
+  const {type,i} = editTarget;
+  if (type==='task') {
+    tasks[i] = {...tasks[i], emoji, label, pts};
+    await saveTasks();
+  } else {
+    rewards[i] = {...rewards[i], emoji, label, cost:pts};
+    await saveRewards();
+  }
+  document.getElementById('edit-modal').classList.add('hidden');
+  editTarget=null;
+  toast('Saved!');
 }
 
 // ═══════════════════════════════════════════════════════
-//  ACTIONS
+//  TRACKER ACTIONS
 // ═══════════════════════════════════════════════════════
-function switchKid(id) { activeKid = id; render(); }
+function switchKid(id) { activeKid=id; render(); }
 
-async function earnTask(kidId, taskId, pts, label) {
-  const kid = kids.find(k => k.id === kidId);
-  if (!kid) return;
-  const todayEarned = kid.todayEarned || [];
-  if (todayEarned.includes(taskId)) return;
-  const updated = {
-    ...kid,
-    todayEarned: [...todayEarned, taskId],
-    totalPts: (kid.totalPts || 0) + pts,
-    history: [...(kid.history || []), { label, pts, ts: Date.now() }],
-  };
-  await saveKid(updated);
+async function earnTask(kidId,taskId,pts,label) {
+  const kid=kids.find(k=>k.id===kidId); if(!kid) return;
+  const todayEarned=kid.todayEarned||[];
+  if(todayEarned.includes(taskId)) return;
+  await saveKid({...kid, todayEarned:[...todayEarned,taskId], totalPts:(kid.totalPts||0)+pts,
+    history:[...(kid.history||[]),{label,pts,ts:Date.now()}]});
   toast(`🌟 +${pts} points for ${kid.name}!`);
 }
-
-async function redeem(kidId, cost, label) {
-  const kid = kids.find(k => k.id === kidId);
-  if (!kid || (kid.totalPts || 0) < cost) return;
-  if (!confirm(`Redeem "${label}" for ${kid.name}? This costs ${cost} ⭐`)) return;
-  const updated = {
-    ...kid,
-    totalPts: kid.totalPts - cost,
-    history: [...(kid.history || []), { label: `🎁 ${label}`, pts: -cost, ts: Date.now() }],
-  };
-  await saveKid(updated);
+async function redeem(kidId,cost,label) {
+  const kid=kids.find(k=>k.id===kidId); if(!kid||(kid.totalPts||0)<cost) return;
+  if(!confirm(`Redeem "${label}" for ${kid.name}? Costs ${cost} ⭐`)) return;
+  await saveKid({...kid, totalPts:kid.totalPts-cost,
+    history:[...(kid.history||[]),{label:`🎁 ${label}`,pts:-cost,ts:Date.now()}]});
   toast(`🎉 Enjoy your reward, ${kid.name}!`);
 }
-
 async function resetDay(kidId) {
-  const kid = kids.find(k => k.id === kidId);
-  if (!kid) return;
-  if (!confirm(`Start a new day for ${kid.name}? Today's completed tasks will reset.`)) return;
-  await saveKid({ ...kid, todayEarned: [] });
+  const kid=kids.find(k=>k.id===kidId); if(!kid) return;
+  if(!confirm(`Start a new day for ${kid.name}? Today's tasks reset.`)) return;
+  await saveKid({...kid,todayEarned:[]});
   toast('🌅 New day started!');
 }
-
-async function removeKid(kidId, name) {
-  if (!confirm(`Remove ${name} from the tracker? All their data will be deleted.`)) return;
-  await deleteKid(kidId);
-  toast('Removed.');
+async function removeKid(kidId,name) {
+  if(!confirm(`Remove ${name}? All data will be deleted.`)) return;
+  await deleteKid(kidId); toast('Removed.');
 }
 
 // ═══════════════════════════════════════════════════════
 //  ADD KID MODAL
 // ═══════════════════════════════════════════════════════
 function openAddModal() {
-  selectedEmoji = AVATARS[0];
-  document.getElementById('kid-name').value = '';
-  document.getElementById('kid-color').selectedIndex = 0;
+  selectedEmoji=AVATARS[0];
+  document.getElementById('kid-name').value='';
+  document.getElementById('kid-color').selectedIndex=0;
   renderEmojiPicker();
   document.getElementById('add-modal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('kid-name').focus(), 80);
+  setTimeout(()=>document.getElementById('kid-name').focus(),80);
 }
-function closeAddModal() {
-  document.getElementById('add-modal').classList.add('hidden');
-}
+function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
 function renderEmojiPicker() {
-  document.getElementById('emoji-picker').innerHTML = AVATARS.map(e => `
-    <button class="emoji-opt ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}')">${e}</button>
-  `).join('');
+  document.getElementById('emoji-picker').innerHTML=AVATARS.map(e=>
+    `<button class="emoji-opt ${e===selectedEmoji?'selected':''}" onclick="selectEmoji('${e}')">${e}</button>`
+  ).join('');
 }
-function selectEmoji(e) { selectedEmoji = e; renderEmojiPicker(); }
-
+function selectEmoji(e) { selectedEmoji=e; renderEmojiPicker(); }
 async function confirmAdd() {
-  const name = document.getElementById('kid-name').value.trim();
-  if (!name) { document.getElementById('kid-name').focus(); return; }
-  const color = document.getElementById('kid-color').value;
-  const id = 'kid_' + Date.now();
+  const name=document.getElementById('kid-name').value.trim();
+  if(!name){document.getElementById('kid-name').focus();return;}
+  const color=document.getElementById('kid-color').value;
+  const id='kid_'+Date.now();
   await db.collection('starpoints_kids').doc(id).set({
-    name, emoji: selectedEmoji, color,
-    totalPts: 0, todayEarned: [], history: [],
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    name,emoji:selectedEmoji,color,totalPts:0,todayEarned:[],history:[],
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
-  activeKid = id;
-  closeAddModal();
-  toast(`Welcome, ${name}! 🌟`);
+  activeKid=id; closeAddModal(); toast(`Welcome, ${name}! 🌟`);
 }
 
 // ═══════════════════════════════════════════════════════
-//  TOAST
+//  UTILS
 // ═══════════════════════════════════════════════════════
+function fmtTime(ts) {
+  if(!ts) return '';
+  const d=new Date(ts);
+  return d.toLocaleDateString('en-CA')+' '+d.toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+}
 let toastTimer;
 function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
 }
 
 // ═══════════════════════════════════════════════════════
-//  EVENTS & INIT
+//  EVENTS
 // ═══════════════════════════════════════════════════════
-document.getElementById('add-kid-btn').onclick = openAddModal;
+document.getElementById('add-kid-btn').onclick  = openAddModal;
 document.getElementById('cancel-add').onclick   = closeAddModal;
 document.getElementById('confirm-add').onclick  = confirmAdd;
-document.getElementById('add-modal').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeAddModal();
-});
-document.getElementById('kid-name').addEventListener('keydown', e => {
-  if (e.key === 'Enter') confirmAdd();
-});
+document.getElementById('cancel-edit').onclick  = ()=>document.getElementById('edit-modal').classList.add('hidden');
+document.getElementById('confirm-edit').onclick = confirmEdit;
+document.getElementById('add-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAddModal();});
+document.getElementById('edit-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('edit-modal').classList.add('hidden');});
+document.getElementById('kid-name').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAdd();});
 
-startListener();
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+document.getElementById('add-kid-btn').style.display='';
+startListeners();
 </script>
 </body>
 </html>
