@@ -76,6 +76,11 @@ main{padding:16px;max-width:640px;margin:0 auto;}
 .redeem-btn:disabled{background:#ddd;color:#aaa;cursor:not-allowed;}
 .redeem-btn:not(:disabled):hover{transform:scale(1.05);}
 
+/* LOSE POINTS */
+.neg-tag{background:#ffcdd2 !important;color:#b71c1c !important;}
+.lose-btn{background:#fff;color:#c62828;border:2px solid #ef9a9a;border-radius:8px;padding:3px 10px;font:700 .77rem 'Nunito',sans-serif;cursor:pointer;transition:transform .12s,background .12s;}
+.lose-btn:hover{background:#ffcdd2;transform:scale(1.05);}
+
 /* HISTORY */
 .history-list{display:flex;flex-direction:column;gap:3px;}
 .history-item{font-size:.82rem;display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;color:#555;gap:8px;}
@@ -279,6 +284,18 @@ const DEFAULT_REWARDS = [
   {id:'cash',     emoji:'💵', label:'$10 cash',                   cost:150},
   {id:'trip',     emoji:'🌴', label:'Day trip or special outing', cost:200},
 ];
+const DEFAULT_PENALTIES = [
+  {id:'latebed',   emoji:'🌙', label:'Went to bed late',                     pts:10},
+  {id:'yellsib',   emoji:'😡', label:'Yelling at sibling',                   pts:10},
+  {id:'yellpar',   emoji:'🗣️', label:'Yelling at parents',                   pts:15},
+  {id:'talkback',  emoji:'🙊', label:'Talking back / rude words',            pts:10},
+  {id:'nolisten',  emoji:'🙉', label:'Not listening after 2 reminders',      pts:5 },
+  {id:'mean',      emoji:'💢', label:'Name-calling / being mean',            pts:10},
+  {id:'hitting',   emoji:'👊', label:'Hitting or pushing',                   pts:20},
+  {id:'lying',     emoji:'🤥', label:'Lying',                                pts:15},
+  {id:'screen',    emoji:'📱', label:'Screen time over the limit',           pts:10},
+  {id:'mess',      emoji:'🧸', label:'Left a mess after being asked',        pts:5 },
+];
 const CONFIG_PASSWORD = 'kid183';
 const AVATARS = ['🦁','🐻','🐼','🦊','🐸','🐯','🐨','🐙','🦋','🌸','🦄','🚀'];
 
@@ -288,11 +305,12 @@ const AVATARS = ['🦁','🐻','🐼','🦊','🐸','🐯','🐨','🐙','🦋',
 let kids    = [];
 let tasks   = [];
 let rewards = [];
+let penalties = [];
 let activeKid      = null;
 let currentPage    = 'tracker';
 let configUnlocked = false;
 let selectedEmoji  = AVATARS[0];
-let editTarget     = null; // {type:'task'|'reward', item}
+let editTarget     = null; // {type:'task'|'reward'|'penalty', i}
 
 // ═══════════════════════════════════════════════════════
 //  FIRESTORE LISTENERS
@@ -326,16 +344,23 @@ function loadConfig() {
     rewards = list.length > 0 ? list : DEFAULT_REWARDS.map(x=>({...x}));
     render();
   });
+  // Penalties — real-time from Firestore, seed defaults if doc missing
+  db.collection('starpoints_config').doc('penalties').onSnapshot(snap => {
+    penalties = snap.exists ? (snap.data().list || []) : DEFAULT_PENALTIES.map(x=>({...x}));
+    render();
+  });
 }
 async function saveTasks()   { await db.collection('starpoints_config').doc('tasks').set({list: tasks}); }
 async function saveRewards() { await db.collection('starpoints_config').doc('rewards').set({list: rewards}); }
+async function savePenalties() { await db.collection('starpoints_config').doc('penalties').set({list: penalties}); }
 async function saveKid(kid)  { const {id,...d}=kid; await db.collection('starpoints_kids').doc(id).set(d); }
 async function deleteKid(id) { await db.collection('starpoints_kids').doc(id).delete(); }
 
 async function resetToDefaults() {
-  if (!confirm("Reset tasks and rewards back to the whiteboard defaults? Kids' points are NOT affected.")) return;
+  if (!confirm("Reset tasks, rewards and lose-points back to the defaults? Kids' points are NOT affected.")) return;
   await db.collection('starpoints_config').doc('tasks').set({list: DEFAULT_TASKS.map(x=>({...x}))});
   await db.collection('starpoints_config').doc('rewards').set({list: DEFAULT_REWARDS.map(x=>({...x}))});
+  await db.collection('starpoints_config').doc('penalties').set({list: DEFAULT_PENALTIES.map(x=>({...x}))});
   toast('✅ Reset to defaults!');
 }
 
@@ -433,6 +458,19 @@ function renderTracker() {
         }).join('')}
       </div>
     </div>
+    ${penalties.length?`
+    <div class="section">
+      <div class="section-title">Oops! Lose Points</div>
+      <div class="task-grid">
+        ${penalties.map(p=>`<div class="task-row">
+          <div class="task-left">${p.emoji} ${p.label}</div>
+          <div class="task-right">
+            <span class="pts-tag neg-tag">-${p.pts}</span>
+            <button class="lose-btn" onclick="losePoints('${kid.id}','${p.id}')">−Points</button>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`:''}
     ${history.length?`
     <div class="section">
       <div class="section-title">Recent Activity</div>
@@ -511,6 +549,23 @@ function renderConfig() {
         <button class="add-row-btn" onclick="addReward()">+ Add</button>
       </div>
     </div>
+
+    <div class="config-section">
+      <h3>⚠️ Lose Points</h3>
+      ${penalties.map((p,i)=>`
+        <div class="config-item">
+          <div class="config-item-label">${p.emoji} ${p.label}</div>
+          <span class="config-item-pts neg-tag">-${p.pts}</span>
+          <button class="config-edit-btn" onclick="openEdit('penalty',${i})">✏️</button>
+          <button class="config-del-btn" onclick="deletePenalty(${i})">✕</button>
+        </div>`).join('')}
+      <div class="add-row">
+        <input class="emoji-input" id="new-pen-emoji" type="text" placeholder="😡" maxlength="4"/>
+        <input id="new-pen-label" type="text" placeholder="Behaviour" maxlength="40"/>
+        <input class="pts-input" id="new-pen-pts" type="number" placeholder="pts" min="1" max="9999"/>
+        <button class="add-row-btn" onclick="addPenalty()">+ Add</button>
+      </div>
+    </div>
   </div>`;
 }
 
@@ -564,15 +619,32 @@ async function deleteReward(i) {
   toast('Reward removed.');
 }
 
+// ── PENALTY CONFIG ──
+async function addPenalty() {
+  const emoji = (document.getElementById('new-pen-emoji').value.trim()||'⚠️');
+  const label = document.getElementById('new-pen-label').value.trim();
+  const pts   = parseInt(document.getElementById('new-pen-pts').value)||0;
+  if (!label||pts<1) { toast('Fill in behaviour and points.'); return; }
+  penalties.push({id:'pen_'+Date.now(), emoji, label, pts});
+  await savePenalties();
+  toast('Added!');
+}
+async function deletePenalty(i) {
+  if (!confirm(`Delete "${penalties[i].label}"?`)) return;
+  penalties.splice(i,1);
+  await savePenalties();
+  toast('Removed.');
+}
+
 // ── EDIT MODAL ──
 function openEdit(type, i) {
-  const item = type==='task' ? tasks[i] : rewards[i];
+  const item = type==='task' ? tasks[i] : type==='penalty' ? penalties[i] : rewards[i];
   editTarget = {type, i};
-  document.getElementById('edit-modal-title').textContent = type==='task' ? '✏️ Edit Task' : '✏️ Edit Reward';
-  document.getElementById('edit-pts-label').textContent   = type==='task' ? 'Points earned' : 'Points cost';
+  document.getElementById('edit-modal-title').textContent = type==='task' ? '✏️ Edit Task' : type==='penalty' ? '✏️ Edit Lose-Points' : '✏️ Edit Reward';
+  document.getElementById('edit-pts-label').textContent   = type==='task' ? 'Points earned' : type==='penalty' ? 'Points lost' : 'Points cost';
   document.getElementById('edit-emoji').value = item.emoji;
   document.getElementById('edit-label').value = item.label;
-  document.getElementById('edit-pts').value   = type==='task' ? item.pts : item.cost;
+  document.getElementById('edit-pts').value   = type==='reward' ? item.cost : item.pts;
   document.getElementById('edit-modal').classList.remove('hidden');
 }
 async function confirmEdit() {
@@ -585,6 +657,9 @@ async function confirmEdit() {
   if (type==='task') {
     tasks[i] = {...tasks[i], emoji, label, pts};
     await saveTasks();
+  } else if (type==='penalty') {
+    penalties[i] = {...penalties[i], emoji, label, pts};
+    await savePenalties();
   } else {
     rewards[i] = {...rewards[i], emoji, label, cost:pts};
     await saveRewards();
@@ -606,6 +681,16 @@ async function earnTask(kidId,taskId,pts,label) {
   await saveKid({...kid, todayEarned:[...todayEarned,taskId], totalPts:(kid.totalPts||0)+pts,
     history:[...(kid.history||[]),{label,pts,ts:Date.now()}]});
   toast(`🌟 +${pts} points for ${kid.name}!`);
+}
+async function losePoints(kidId,penId) {
+  const kid=kids.find(k=>k.id===kidId); const pen=penalties.find(p=>p.id===penId);
+  if(!kid||!pen) return;
+  if(!confirm(`Take ${pen.pts} points from ${kid.name}?\n${pen.emoji} ${pen.label}`)) return;
+  const cur=kid.totalPts||0;
+  const lost=Math.min(cur,pen.pts); // never below 0
+  await saveKid({...kid, totalPts:cur-lost,
+    history:[...(kid.history||[]),{label:`⚠️ ${pen.label}`,pts:-lost,ts:Date.now()}]});
+  toast(lost>0 ? `−${lost} points for ${kid.name}. Tomorrow is a fresh start! 💪` : `${kid.name} has no points to lose.`);
 }
 async function redeem(kidId,cost,label) {
   const kid=kids.find(k=>k.id===kidId); if(!kid||(kid.totalPts||0)<cost) return;
